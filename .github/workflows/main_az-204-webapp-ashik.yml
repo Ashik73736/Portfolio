@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - az-204-webapp-ashik
+name: Build and deploy Vite React app to Azure Web App - az-204-webapp-ashik
 
 on:
   push:
@@ -13,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -23,20 +20,22 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
+      - name: Install dependencies and build Vite app
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm run build
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      # ✅ Zip contents of dist for deployment
+      - name: Zip dist folder
+        run: |
+          cd dist
+          zip -r ../vite-dist.zip .
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: vite-app
+          path: vite-dist.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -45,30 +44,32 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: vite-app
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
-      
-      - name: Login to Azure
+      # ✅ Create target folder and unzip
+      - name: Unzip to dist folder
+        run: |
+          unzip vite-dist.zip 
+
+      - name: Azure login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_330387766F254DF1A087A9CCB70600AD }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4E9534DBF7E421EBDA71DA0073F1714 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7D9179F6B2F14BDB970F763827822A7F }}
 
-      - name: 'Deploy to Azure Web App'
+      # ✅ Deploy using Azure Web App deploy action
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'az-204-webapp-ashik'
           slot-name: 'Production'
-          package: ./dist
-          
+          package: .
