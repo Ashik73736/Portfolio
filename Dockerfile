@@ -10,7 +10,7 @@ COPY . .
 
 RUN npm build
 
-FROM ngnix:1.29.0 
+FROM nginx:1.29.0 
 
 COPY --from=build  /app/dist /usr/share/nginx/html
 
