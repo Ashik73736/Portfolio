@@ -8,6 +8,8 @@ RUN npm install
 
 COPY . .
 
+RUN chown -R node:node /app
+
 EXPOSE 80
 
 CMD ["npm","run","dev"]
